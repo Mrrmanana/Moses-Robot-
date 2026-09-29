@@ -17,24 +17,17 @@ jobs:
           sudo apt update
           sudo apt install -y openjdk-17-jdk zip unzip libffi-dev libssl-dev
           pip install --upgrade pip
-          pip install buildozer Cython==3.0.11 legacy-cgi
-          PYLIB=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
-          echo "import sys, legacy_cgi; sys.modules['cgi']=legacy_cgi" > $PYLIB/sitecustomize.py
+          pip install buildozer Cython==3.0.11
 
-      - name: Fix Android SDK Path
+      - name: Fix Android SDK
         run: |
-          echo "Fixing sdkmanager location..."
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          # Create buildozer SDK folder and link it to system SDK
           mkdir -p $HOME/.buildozer/android/platform/
           rm -rf $HOME/.buildozer/android/platform/android-sdk
           ln -sf $ANDROID_HOME $HOME/.buildozer/android/platform/android-sdk
-          # Also create old tools path that buildozer looks for
           mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
           ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-          # Install needed tools
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "build-tools;37.0.0" "platforms;android-33" || true
-          ls $HOME/.buildozer/android/platform/android-sdk/tools/bin/
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33" || true
 
       - name: Build APK
         run: |
