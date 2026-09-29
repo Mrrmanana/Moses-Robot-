@@ -21,13 +21,20 @@ jobs:
           PYLIB=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
           echo "import sys, legacy_cgi; sys.modules['cgi']=legacy_cgi" > $PYLIB/sitecustomize.py
 
-      - name: Accept Android Licenses
+      - name: Fix Android SDK Path
         run: |
-          echo "Accepting all Android licenses..."
+          echo "Fixing sdkmanager location..."
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2" "build-tools;37.0.0" "platform-tools" || true
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
-          cp $ANDROID_HOME/licenses/* $HOME/.buildozer/android/platform/android-sdk/licenses/ 2>/dev/null || true
+          # Create buildozer SDK folder and link it to system SDK
+          mkdir -p $HOME/.buildozer/android/platform/
+          rm -rf $HOME/.buildozer/android/platform/android-sdk
+          ln -sf $ANDROID_HOME $HOME/.buildozer/android/platform/android-sdk
+          # Also create old tools path that buildozer looks for
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          # Install needed tools
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "build-tools;37.0.0" "platforms;android-33" || true
+          ls $HOME/.buildozer/android/platform/android-sdk/tools/bin/
 
       - name: Build APK
         run: |
